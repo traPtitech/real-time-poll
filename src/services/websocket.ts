@@ -10,6 +10,9 @@ export enum ConnectionStatus {
   ERROR = "error",
 }
 
+const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+const defaultUrl = protocol + "//" + location.host + "/api/ws";
+
 // WebSocket client class
 class WebSocketClient {
   private socket: WebSocket | null = null;
@@ -29,7 +32,7 @@ class WebSocketClient {
   );
 
   // Connect to WebSocket server
-  public connect(url: string = "ws://" + location.host + "/api/ws"): void {
+  public connect(url: string = defaultUrl): void {
     if (this.socket && this.isConnected.value) {
       console.log("WebSocket already connected");
       return;
