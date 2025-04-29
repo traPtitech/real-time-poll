@@ -230,7 +230,7 @@ onMounted(() => {
       <!-- View mode -->
       <div v-if="!isEditMode">
         <div class="flex justify-between items-start mb-2">
-          <h1 class="text-2xl font-bold">{{ poll.title }}</h1>
+          <h1 class="text-2xl font-bold break-all">{{ poll.title }}</h1>
           <button
             @click="enterEditMode"
             class="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 flex items-center gap-1"
@@ -239,7 +239,7 @@ onMounted(() => {
             <span>編集</span>
           </button>
         </div>
-        <p v-if="poll.description" class="text-gray-600 mb-6">{{ poll.description }}</p>
+        <p v-if="poll.description" class="text-gray-600 mb-6 break-all">{{ poll.description }}</p>
       </div>
 
       <!-- Edit mode -->
