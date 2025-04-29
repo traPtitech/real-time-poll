@@ -1,0 +1,30 @@
+services:
+  real-time-poll-client:
+    container_name: real-time-poll-client
+    build:
+      context: ../
+      dockerfile: deployment/client.Dockerfile
+    restart: always
+    networks:
+      - real-time-poll-network
+    ports:
+      - '5111:80'
+    develop:
+      watch:
+        - path: ./deployment/Caddyfile
+          action: rebuild
+    environment:
+      - SERVER_ORIGIN=real-time-poll-server:3000
+  real-time-poll-server:
+    container_name: real-time-poll-server
+    build:
+      context: ../
+      dockerfile: deployment/server.Dockerfile
+    restart: always
+    networks:
+      - real-time-poll-network
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+networks:
+  real-time-poll-network:

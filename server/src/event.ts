@@ -1,4 +1,4 @@
-import { Poll } from "./domain";
+import type { Poll } from "./domain";
 
 // WebSocket message types
 export enum WebSocketMessageType {

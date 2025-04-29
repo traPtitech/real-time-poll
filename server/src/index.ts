@@ -125,7 +125,7 @@ app.get(
 
 // REST API endpoints
 // Get all polls
-app.get("/api/polls", async (c) => {
+app.get("polls", async (c) => {
   try {
     const polls = await db.getPolls();
     return c.json(polls);
@@ -136,7 +136,7 @@ app.get("/api/polls", async (c) => {
 });
 
 // Get a specific poll
-app.get("/api/polls/:id", async (c) => {
+app.get("polls/:id", async (c) => {
   try {
     const id = c.req.param("id");
     const poll = await db.getPoll(id);
@@ -153,7 +153,7 @@ app.get("/api/polls/:id", async (c) => {
 });
 
 // Create a new poll
-app.post("/api/polls", async (c) => {
+app.post("polls", async (c) => {
   try {
     const body = await c.req.json();
 
@@ -185,7 +185,7 @@ app.post("/api/polls", async (c) => {
 });
 
 // Update a poll
-app.put("/api/polls/:id", async (c) => {
+app.put("polls/:id", async (c) => {
   try {
     const id = c.req.param("id");
     const body = await c.req.json();
@@ -234,7 +234,7 @@ app.put("/api/polls/:id", async (c) => {
 });
 
 // Get current user information
-app.get("/api/me", async (c) => {
+app.get("me", async (c) => {
   try {
     // Get the X-Forwarded-User header or use "cp20" as fallback
     const name = c.req.header("X-Forwarded-User") || "cp20";
@@ -247,7 +247,7 @@ app.get("/api/me", async (c) => {
 });
 
 // Delete a poll
-app.delete("/api/polls/:id", async (c) => {
+app.delete("polls/:id", async (c) => {
   try {
     const id = c.req.param("id");
 
@@ -265,7 +265,7 @@ app.delete("/api/polls/:id", async (c) => {
 });
 
 // Add a vote to a poll option
-app.post("/api/polls/:id/vote", async (c) => {
+app.post("polls/:id/vote", async (c) => {
   try {
     const id = c.req.param("id");
     const body = await c.req.json();
@@ -295,7 +295,7 @@ app.post("/api/polls/:id/vote", async (c) => {
 });
 
 // Remove a vote from a poll option
-app.delete("/api/polls/:id/vote", async (c) => {
+app.delete("polls/:id/vote", async (c) => {
   try {
     const id = c.req.param("id");
     const body = await c.req.json();

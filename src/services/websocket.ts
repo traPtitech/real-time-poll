@@ -29,7 +29,7 @@ class WebSocketClient {
   );
 
   // Connect to WebSocket server
-  public connect(url: string = "ws://" + location.host + "/ws"): void {
+  public connect(url: string = "ws://" + location.host + "/api/ws"): void {
     if (this.socket && this.isConnected.value) {
       console.log("WebSocket already connected");
       return;
