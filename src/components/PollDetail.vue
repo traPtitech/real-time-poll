@@ -158,7 +158,7 @@ const copyResult = () => {
     })[option] ?? ''
 
   const measure = ':null::null::null::null::five::null::null::null::null::zero:'
-  const repeatedMeasure = measure.repeat(Math.ceil(totalVotes.value / 10))
+  const repeatedMeasure = ':null:' + measure.repeat(Math.ceil(totalVotes.value / 10))
   const optionResult = poll.value?.options
     .map((option) => `${getStamp(option.text)}${option.votes.map((v) => `:@${v}:`).join('')}`)
     .join('\n')
