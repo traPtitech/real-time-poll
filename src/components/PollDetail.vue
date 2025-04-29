@@ -180,8 +180,6 @@ ${optionResult}
 watch(
   () => wsClient.currentPoll.value,
   (newPoll) => {
-    console.log('WebSocket poll updated:', newPoll)
-
     if (newPoll && newPoll.id === props.pollId) {
       poll.value = newPoll
     }

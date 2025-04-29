@@ -107,14 +107,12 @@ app.get(
       },
       onOpen: (event, ws) => {
         wsClients.push(ws);
-        console.log("WebSocket connection opened");
       },
       onClose: (event, ws) => {
         const index = wsClients.indexOf(ws);
         if (index !== -1) {
           wsClients.splice(index, 1);
         }
-        console.log("WebSocket connection closed");
       },
       onError: (ws, error) => {
         console.error("WebSocket error:", error);

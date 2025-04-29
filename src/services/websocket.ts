@@ -34,7 +34,6 @@ class WebSocketClient {
   // Connect to WebSocket server
   public connect(url: string = defaultUrl): void {
     if (this.socket && this.isConnected.value) {
-      console.log("WebSocket already connected");
       return;
     }
 
@@ -111,7 +110,6 @@ class WebSocketClient {
 
   // Handle WebSocket open event
   private handleOpen(): void {
-    console.log("WebSocket connected");
     this.status.value = ConnectionStatus.CONNECTED;
     this.reconnectAttempts = 0;
 
@@ -170,7 +168,6 @@ class WebSocketClient {
 
   // Handle WebSocket close event
   private handleClose(event: CloseEvent): void {
-    console.log("WebSocket disconnected:", event.code, event.reason);
     this.socket = null;
     this.status.value = ConnectionStatus.DISCONNECTED;
 
@@ -198,10 +195,6 @@ class WebSocketClient {
   private attemptReconnect(): void {
     this.reconnectAttempts++;
     const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
-
-    console.log(
-      `Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`,
-    );
 
     this.reconnectTimeout = window.setTimeout(() => {
       this.connect();
