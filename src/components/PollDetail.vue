@@ -143,7 +143,7 @@ const savePollChanges = async () => {
 }
 
 const copyEmbedCode = () => {
-  const embedCode = `<iframe src="${window.origin}/${props.pollId}" width="600" height="400"></iframe>`
+  const embedCode = `<iframe src="${window.origin}/poll/${props.pollId}" width="600" height="600"></iframe>`
   navigator.clipboard.writeText(embedCode).then(() => {
     alert('埋め込みコードがクリップボードにコピーされました！')
   })
