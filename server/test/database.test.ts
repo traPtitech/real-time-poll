@@ -13,10 +13,10 @@ describe("InMemoryDatabase", () => {
       title: "Favorite Programming Language",
       description: "What is your favorite programming language?",
       options: [
-        { text: "JavaScript", votes: [] },
-        { text: "TypeScript", votes: [] },
-        { text: "Python", votes: [] },
-        { text: "Rust", votes: [] },
+        { id: "option-1", text: "JavaScript", votes: [] },
+        { id: "option-2", text: "TypeScript", votes: [] },
+        { id: "option-3", text: "Python", votes: [] },
+        { id: "option-4", text: "Rust", votes: [] },
       ],
       createdAt: new Date().toISOString(),
     };
@@ -36,10 +36,10 @@ describe("InMemoryDatabase", () => {
         title: "Favorite Framework",
         description: "What is your favorite framework?",
         options: [
-          { text: "React", votes: [] },
-          { text: "Vue", votes: [] },
-          { text: "Angular", votes: [] },
-          { text: "Svelte", votes: [] },
+          { id: "option-1", text: "React", votes: [] },
+          { id: "option-2", text: "Vue", votes: [] },
+          { id: "option-3", text: "Angular", votes: [] },
+          { id: "option-4", text: "Svelte", votes: [] },
         ],
         createdAt: new Date().toISOString(),
       };
