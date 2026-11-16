@@ -11,12 +11,12 @@ bun run dev    # http://localhost:3000
 
 ## 環境変数
 
-| 変数 | 既定値 | 説明 |
-| --- | --- | --- |
-| `TRAQ_API_TOKEN` | (なし) | traQ API トークン。設定すると役員会メンバー限定モードになる |
-| `EXECUTIVE_GROUP_NAME` | `executive26` | 役員会メンバーの traQ ユーザーグループ名 |
-| `TRAQ_API_ORIGIN` | `https://q.trap.jp/api/v3` | traQ API のオリジン |
-| `PORT` | (Bun 既定) | 待ち受けポート |
+| 変数                   | 既定値                     | 説明                                                        |
+| ---------------------- | -------------------------- | ----------------------------------------------------------- |
+| `TRAQ_API_TOKEN`       | (なし)                     | traQ API トークン。設定すると役員会メンバー限定モードになる |
+| `EXECUTIVE_GROUP_NAME` | `executive26`              | 役員会メンバーの traQ ユーザーグループ名                    |
+| `TRAQ_API_ORIGIN`      | `https://q.trap.jp/api/v3` | traQ API のオリジン                                         |
+| `PORT`                 | (Bun 既定)                 | 待ち受けポート                                              |
 
 ### アクセス制限の挙動
 

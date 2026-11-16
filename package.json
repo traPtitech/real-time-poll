@@ -9,13 +9,11 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "lint:oxlint": "oxlint . --fix -D correctness --ignore-path .gitignore",
-    "lint:eslint": "eslint . --fix",
-    "lint": "run-s lint:*",
-    "format": "prettier --write src/"
+    "lint": "oxlint . --fix --ignore-path .gitignore",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check ."
   },
   "dependencies": {
-    "@heroicons/vue": "2.2.0",
     "@tabler/icons-vue": "^3.52.0",
     "@tailwindcss/vite": "4.1.4",
     "tailwindcss": "4.1.4",
@@ -26,21 +24,14 @@
     "@tsconfig/node22": "22.0.1",
     "@types/node": "22.14.1",
     "@vitejs/plugin-vue": "5.2.3",
-    "@vue/eslint-config-prettier": "10.2.0",
-    "@vue/eslint-config-typescript": "14.5.0",
     "@vue/tsconfig": "0.7.0",
     "daisyui": "^5.8.1",
-    "eslint": "9.25.1",
-    "eslint-plugin-oxlint": "0.16.7",
-    "eslint-plugin-vue": "10.0.0",
-    "jiti": "2.4.2",
     "npm-run-all2": "7.0.2",
-    "oxlint": "0.16.7",
-    "prettier": "3.5.3",
+    "oxfmt": "0.78.0",
+    "oxlint": "1.93.0",
     "typescript": "5.8.3",
-    "vite": "6.3.3",
+    "vite": "6.4.6",
     "vite-plugin-vue-devtools": "7.7.5",
     "vue-tsc": "2.2.10"
-  },
-  "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
+  }
 }
