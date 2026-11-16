@@ -67,10 +67,10 @@ const handleVoteClick = () => {
         </div>
 
         <button
+          v-if="!disabled"
           type="button"
           class="btn shrink-0"
           :class="hasVoted ? 'btn-error' : 'btn-primary'"
-          :disabled="disabled"
           @click="handleVoteClick"
         >
           <IconX v-if="hasVoted" class="h-5 w-5" />

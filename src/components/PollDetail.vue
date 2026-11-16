@@ -7,6 +7,9 @@ import { userService } from '../services/user'
 import PollOption from './PollOption.vue'
 import { IconCopy, IconPencil, IconRefresh } from '@tabler/icons-vue'
 
+// 役員会メンバーのみ投票・編集可能
+const canEdit = computed(() => userService.isExecutive.value)
+
 const props = defineProps<{
   pollId: string
   initialPoll?: Poll
@@ -68,7 +71,7 @@ const loadPoll = async () => {
 
 // Handle vote
 const handleVote = async (optionIndex: number) => {
-  if (!poll.value) return
+  if (!poll.value || !canEdit.value) return
 
   try {
     // Try to add vote via WebSocket if connected
@@ -91,7 +94,7 @@ const handleVote = async (optionIndex: number) => {
 
 // Handle unvote
 const handleUnvote = async (optionIndex: number) => {
-  if (!poll.value) return
+  if (!poll.value || !canEdit.value) return
 
   try {
     // Try to remove vote via WebSocket if connected
@@ -241,7 +244,12 @@ onMounted(() => {
         <div v-if="!isEditMode">
           <div class="flex justify-between items-start gap-3">
             <h1 class="text-2xl font-bold break-all min-w-0">{{ poll.title }}</h1>
-            <button type="button" class="btn btn-ghost btn-sm shrink-0" @click="enterEditMode">
+            <button
+              v-if="canEdit"
+              type="button"
+              class="btn btn-ghost btn-sm shrink-0"
+              @click="enterEditMode"
+            >
               <IconPencil class="h-4 w-4" />
               編集
             </button>
@@ -329,6 +337,7 @@ onMounted(() => {
             :option-index="index"
             :poll-id="poll.id"
             :total-eligible="executiveTotal"
+            :disabled="!canEdit"
             @vote="handleVote"
             @unvote="handleUnvote"
           />

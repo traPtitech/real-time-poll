@@ -110,11 +110,12 @@ const voted = await post(`/polls/${poll.id}/vote`, {
 })
 console.log('vote(cp20):', voted.status, (await voted.json()).options[0].votes)
 
-// 7) 一覧 (役員以外 → 403)
-const listDenied = await fetch(`${base}/polls`, {
+// 7) 一覧 (役員以外でも閲覧可 → 200)
+const listOther = await fetch(`${base}/polls`, {
   headers: { 'X-Forwarded-User': 'other' },
 })
-console.log('list(other):', listDenied.status)
+const listOtherJson = await listOther.json()
+console.log('list(other):', listOther.status, Array.isArray(listOtherJson))
 
 // 8) ヘッダーなしで投票作成 → 403
 const noHeader = await fetch(`${base}/polls`, {
@@ -150,17 +151,26 @@ const wsResult = await new Promise<string>((resolve, reject) => {
 console.log('ws(cp20):', wsResult)
 ws.close()
 
-// 10) WebSocket (役員以外 → 切断される)
+// 10) WebSocket (役員以外でも閲覧可・投票は不可)
 const ws2 = new HeaderWS(`ws://localhost:3100/ws`, {
   headers: { 'X-Forwarded-User': 'other' },
 })
-const ws2result = await new Promise<string>((resolve) => {
-  const timer = setTimeout(() => resolve('no-message'), 5000)
+const ws2result = await new Promise<string>((resolve, reject) => {
+  const timer = setTimeout(() => reject(new Error('ws2 timeout')), 5000)
+  ws2.onopen = () => ws2.send(JSON.stringify({ type: 'GET_POLLS' }))
   ws2.onmessage = (e) => {
     const m = JSON.parse(e.data)
-    if (m.type === 'ERROR') {
+    if (m.type === 'POLLS') {
+      // 閲覧できたら、投票操作が拒否されることも確認
+      ws2.send(
+        JSON.stringify({
+          type: 'ADD_VOTE',
+          data: { pollId: poll.id, optionIndex: 1, userId: 'other' },
+        }),
+      )
+    } else if (m.type === 'ERROR') {
       clearTimeout(timer)
-      resolve(`ERROR: ${m.message}`)
+      resolve(`POLLS_OK+ERROR: ${m.message}`)
     }
   }
   ws2.onclose = () => resolve('closed')

@@ -39,7 +39,7 @@ const notifyAllClients = (message: string) => {
   }
 }
 
-// 役員会メンバーのみアクセスできるミドルウェア
+// 役員会メンバーのみ実行できるミドルウェア (作成・編集・削除・投票)
 const executiveOnly = createMiddleware(async (c, next) => {
   const username = getUserNameFromHeader(c.req.header('X-Forwarded-User'))
   try {
@@ -55,9 +55,11 @@ const executiveOnly = createMiddleware(async (c, next) => {
   await next()
 })
 
-// 投票の閲覧・作成・編集・投票操作はすべて役員会メンバー限定
-app.use('polls', executiveOnly)
-app.use('polls/*', executiveOnly)
+// 閲覧は全ユーザーに許可するが、作成・編集・削除・投票は役員会メンバー限定
+app.post('polls', executiveOnly)
+app.post('polls/*', executiveOnly)
+app.put('polls/*', executiveOnly)
+app.delete('polls/*', executiveOnly)
 
 // WebSocket connection for real-time updates
 // 本番は Caddy が /api プレフィックスを除去して /ws で届く。
@@ -66,26 +68,15 @@ const wsUpgrade = upgradeWebSocket((c) => {
   // WebSocket接続ユーザーの名前 (X-Forwarded-User は認証プロキシによって設定される)
   const username = getUserNameFromHeader(c.req.header('X-Forwarded-User'))
 
-  // 役員会メンバーでなければ接続を切断する
-  const rejectIfNotExecutive = async (ws: WSContext<ServerWebSocket>) => {
+  // 役員会メンバーかどうかを確認する (閲覧は全員可、投票等の変更操作のみ制限)
+  const checkExecutive = async (): Promise<boolean> => {
     try {
       const info = await getExecutiveInfo(username)
-      if (!info.isExecutive) {
-        ws.send(
-          JSON.stringify({
-            type: WebSocketMessageType.ERROR,
-            message: EXECUTIVE_ONLY_MESSAGE,
-          }),
-        )
-        ws.close()
-        return false
-      }
+      return info.isExecutive
     } catch (error) {
       console.error('Failed to verify executive status:', error)
-      ws.close()
       return false
     }
-    return true
   }
 
   return {
@@ -111,7 +102,13 @@ const wsUpgrade = upgradeWebSocket((c) => {
             }),
           )
         } else if (isAddVoteMessage(messageData)) {
-          if (!(await rejectIfNotExecutive(ws))) {
+          if (!(await checkExecutive())) {
+            ws.send(
+              JSON.stringify({
+                type: WebSocketMessageType.ERROR,
+                message: EXECUTIVE_ONLY_MESSAGE,
+              }),
+            )
             return
           }
           const voters = await db.getVotes(messageData.data.pollId, messageData.data.optionIndex)
@@ -137,7 +134,13 @@ const wsUpgrade = upgradeWebSocket((c) => {
             }),
           )
         } else if (isRemoveVoteMessage(messageData)) {
-          if (!(await rejectIfNotExecutive(ws))) {
+          if (!(await checkExecutive())) {
+            ws.send(
+              JSON.stringify({
+                type: WebSocketMessageType.ERROR,
+                message: EXECUTIVE_ONLY_MESSAGE,
+              }),
+            )
             return
           }
           await db.removeVote(
@@ -172,11 +175,8 @@ const wsUpgrade = upgradeWebSocket((c) => {
       }
     },
     onOpen: (event, ws) => {
-      void rejectIfNotExecutive(ws).then((allowed) => {
-        if (allowed) {
-          wsClients.push(ws)
-        }
-      })
+      // 閲覧は全ユーザーに許可するため、接続時点では制限しない
+      wsClients.push(ws)
     },
     onClose: (event, ws) => {
       const index = wsClients.indexOf(ws)
