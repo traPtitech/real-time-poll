@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { InMemoryDatabase } from "../src/database";
-import { Poll, PollOption } from "../src/domain";
+import { Poll } from "../src/domain";
 
 describe("InMemoryDatabase", () => {
   let db: InMemoryDatabase;

@@ -13,14 +13,14 @@ onMounted(() => {
 <template>
   <main class="container mx-auto px-4 py-8">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <!-- Create Poll Form -->
-      <div>
+      <!-- Poll List (モバイルでは先頭に表示) -->
+      <div class="order-2 md:order-1">
         <CreatePollForm />
       </div>
 
       <!-- Poll List -->
-      <div>
-        <h2 class="text-2xl font-bold mb-4">Available Polls</h2>
+      <div class="order-1 md:order-2">
+        <h2 class="text-2xl font-bold mb-4">作成済みの投票</h2>
         <PollList />
       </div>
     </div>

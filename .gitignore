@@ -14,6 +14,9 @@ dist-ssr
 coverage
 *.local
 
+# 環境変数 (traQ API トークンなどを含む)
+.env
+
 /cypress/videos/
 /cypress/screenshots/
 

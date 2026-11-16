@@ -1,5 +1,66 @@
-# RealTime Poll App
+# RealTime Poll (リアルタイム投票)
+
+結果がリアルタイムで全員の画面に反映される投票ツールです。
+
+- **役員会メンバー限定**: traQ のユーザーグループでメンバーを判定し、グループ外のユーザーは閲覧・投票・作成ともにできません
+- **全役員数の自動取得**: 投票ページには「全役員 N 名のうち X% が投票済み」のように、役員グループの実人数に基づいた参加率が表示されます
+- **非永続化**: 下記の注意を必ずお読みください
+
+## ⚠️ 注意: データは一切保存されません
+
+投票データは**サーバーのメモリ上にのみ**存在します。サーバーの再起動や再デプロイですべて消去されます。
+必要な結果は、投票ページの「結果をコピー」で随時控えてください。
+(アプリ内でもすべてのページで常時警告を表示しています)
+
+## 使い方
 
 ```sh
+# 1. traQ API トークンを設定 (役員会メンバーの判定に必要)
+cp deployment/.env.example deployment/.env
+# deployment/.env に TRAQ_API_TOKEN と EXECUTIVE_GROUP_NAME を記入
+
+# 2. 起動
 docker compose -f deployment/compose.yaml up --build
 ```
+
+アプリは `http://localhost:5111` で起動します。
+
+### 環境変数
+
+| 変数 | 必須 | 説明 |
+| --- | --- | --- |
+| `TRAQ_API_TOKEN` | あり (本番) | traQ API のトークン (Bot トークンなど)。役員会メンバーの判定に使用します |
+| `EXECUTIVE_GROUP_NAME` | なし | 役員会メンバーの traQ ユーザーグループ名 (既定値: `executive26`) |
+| `TRAQ_API_ORIGIN` | なし | traQ API のオリジン (既定値: `https://q.trap.jp/api/v3`) |
+
+トークンが設定されていない場合 (ローカル開発時) はアクセス制限が無効になり、全員が利用できます。サーバーのログに警告が出ます。
+
+## 開発
+
+```sh
+# フロントエンド (http://localhost:5173, API を localhost:3000 にプロキシ)
+bun install && bun run dev
+
+# サーバー (http://localhost:3000)
+cd server && bun install && bun run dev
+
+# サーバーの動作確認 (モック traQ API でアクセス制限を検証)
+cd server && bun ./test/smoke-enforcement.ts
+```
+
+ローカル開発でユーザー名を変えたい場合は `DEV_USER_NAME` 環境変数を設定してください (Vite のプロキシが `X-Forwarded-User` に設定します)。
+
+### 画面確認用モック
+
+サーバー・traQ API 無しで画面を確認できます。URL に `?mock=` を付けるだけです。
+
+| URL | 表示内容 |
+| --- | --- |
+| `/?mock=executive` | 役員 (cp20) として閲覧。全役員 25 名のデモ投票 (賛成/反対・日程投票) が表示され、投票操作も試せます |
+| `/?mock=guest` | 役員以外 (`guest`) としてアクセスしたときの「アクセス権がありません」画面 |
+
+ヘッダーに「モック」バッジが表示され、モック中はサーバー・WebSocket に一切アクセスしません (アバターもローカル生成の SVG です)。`?mock=` が無い通常の URL は実データを表示します。
+
+## 本番での認証の仕組み
+
+本番では traQ 認証プロキシがリクエストに `X-Forwarded-User` ヘッダーを付与します。サーバーはこのヘッダーのユーザー名を traQ API で照会し、`EXECUTIVE_GROUP_NAME` で指定したグループのメンバーかどうかを判定します (60秒キャッシュ)。グループ外ユーザーには 403 を返し、WebSocket も切断します。

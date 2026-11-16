@@ -4,12 +4,7 @@ import { wsClient } from '../services/websocket'
 import { apiClient } from '../services/api'
 import type { Poll } from '../../server/src/domain'
 import { useRouter } from 'vue-router'
-import {
-  ArrowPathIcon,
-  ClockIcon,
-  DocumentTextIcon,
-  UserGroupIcon,
-} from '@heroicons/vue/24/outline'
+import { IconClock, IconList, IconRefresh, IconUsers } from '@tabler/icons-vue'
 
 const router = useRouter()
 
@@ -17,6 +12,16 @@ const router = useRouter()
 const polls = ref<Poll[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
+
+const totalVotes = (poll: Poll) =>
+  poll.options.reduce((sum, option) => sum + option.votes.length, 0)
+
+const formatDate = (iso: string) =>
+  new Intl.DateTimeFormat('ja-JP', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }).format(new Date(iso))
 
 // Load polls
 const loadPolls = async () => {
@@ -34,7 +39,7 @@ const loadPolls = async () => {
     }
   } catch (err) {
     console.error('Error loading polls:', err)
-    error.value = 'Failed to load polls. Please try again.'
+    error.value = '投票の読み込みに失敗しました。'
   } finally {
     loading.value = false
   }
@@ -49,7 +54,7 @@ const goToPoll = (pollId: string) => {
 watch(
   () => wsClient.polls.value,
   (newPolls) => {
-    if (newPolls && newPolls.length > 0) {
+    if (newPolls) {
       polls.value = newPolls
     }
   },
@@ -65,31 +70,22 @@ onMounted(() => {
   <div class="poll-list">
     <!-- Loading state -->
     <div v-if="loading" class="text-center py-8">
-      <div
-        class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400 mx-auto"
-      ></div>
-      <p class="mt-4 text-gray-500">Loading polls...</p>
+      <span class="loading loading-spinner loading-lg text-primary"></span>
+      <p class="mt-4 text-base-content/60">読み込み中…</p>
     </div>
 
     <!-- Error state -->
-    <div
-      v-else-if="error"
-      class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-    >
-      <strong class="font-bold">Error!</strong>
-      <span class="block sm:inline"> {{ error }}</span>
-      <button
-        @click="loadPolls"
-        class="mt-2 bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded flex items-center gap-1 mx-auto"
-      >
-        <ArrowPathIcon class="h-4 w-4" />
-        <span>Try Again</span>
+    <div v-else-if="error" class="alert alert-error text-sm">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn-sm" @click="loadPolls">
+        <IconRefresh class="h-4 w-4" />
+        再試行
       </button>
     </div>
 
     <!-- No polls -->
     <div v-else-if="polls.length === 0" class="text-center py-8">
-      <p class="text-xl text-gray-600">No polls available</p>
+      <p class="text-lg text-base-content/60">投票はまだありません</p>
     </div>
 
     <!-- Polls list -->
@@ -97,27 +93,29 @@ onMounted(() => {
       <div
         v-for="poll in polls"
         :key="poll.id"
-        class="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+        class="card bg-base-100 border border-base-300 hover:border-primary/50 transition-colors cursor-pointer"
         @click="goToPoll(poll.id)"
       >
-        <h2 class="text-xl font-bold mb-2">{{ poll.title }}</h2>
-        <p v-if="poll.description" class="text-gray-600 mb-4 line-clamp-2">
-          {{ poll.description }}
-        </p>
+        <div class="card-body p-5">
+          <h3 class="card-title text-lg break-words">{{ poll.title }}</h3>
+          <p v-if="poll.description" class="text-sm text-base-content/70 line-clamp-2 break-words">
+            {{ poll.description }}
+          </p>
 
-        <div class="flex justify-between items-center text-sm text-gray-500">
-          <span class="flex items-center gap-1">
-            <DocumentTextIcon class="h-4 w-4" />
-            {{ poll.options.length }} options
-          </span>
-          <span class="flex items-center gap-1">
-            <UserGroupIcon class="h-4 w-4" />
-            {{ poll.options.reduce((sum, option) => sum + option.votes.length, 0) }} votes
-          </span>
-          <span class="flex items-center gap-1">
-            <ClockIcon class="h-4 w-4" />
-            {{ new Date(poll.createdAt).toLocaleDateString() }}
-          </span>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-base-content/60">
+            <span class="flex items-center gap-1">
+              <IconList class="h-4 w-4" />
+              {{ poll.options.length }} 選択肢
+            </span>
+            <span class="flex items-center gap-1">
+              <IconUsers class="h-4 w-4" />
+              {{ totalVotes(poll) }} 票
+            </span>
+            <span class="flex items-center gap-1">
+              <IconClock class="h-4 w-4" />
+              {{ formatDate(poll.createdAt) }}
+            </span>
+          </div>
         </div>
       </div>
     </div>

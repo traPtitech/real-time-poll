@@ -5,7 +5,7 @@ import { wsClient } from '../services/websocket'
 import { apiClient } from '../services/api'
 import { userService } from '../services/user'
 import PollOption from './PollOption.vue'
-import { PencilIcon, ClipboardDocumentIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
+import { IconCopy, IconPencil, IconRefresh } from '@tabler/icons-vue'
 
 const props = defineProps<{
   pollId: string
@@ -23,10 +23,25 @@ const editTitle = ref('')
 const editDescription = ref('')
 const isSaving = ref(false)
 
+// 全役員数 (traQ の役員グループから取得、不明な場合は 0)
+const executiveTotal = userService.executiveTotal
+
 // Calculate total votes
 const totalVotes = computed(() => {
   if (!poll.value) return 0
   return poll.value.options.reduce((sum, option) => sum + option.votes.length, 0)
+})
+
+// 投票に参加した人数 (重複を除いた投票者の数)
+const participants = computed(() => {
+  if (!poll.value) return 0
+  return new Set(poll.value.options.flatMap((option) => option.votes)).size
+})
+
+// 全役員のうち投票に参加している割合 (%)
+const participationPct = computed(() => {
+  if (executiveTotal.value <= 0) return null
+  return Math.min(100, Math.round((participants.value / executiveTotal.value) * 100))
 })
 
 // Load poll data
@@ -45,7 +60,7 @@ const loadPoll = async () => {
     }
   } catch (err) {
     console.error('Error loading poll:', err)
-    error.value = 'Failed to load poll. Please try again.'
+    error.value = '投票の読み込みに失敗しました。'
   } finally {
     loading.value = false
   }
@@ -70,7 +85,7 @@ const handleVote = async (optionIndex: number) => {
     }
   } catch (err) {
     console.error('Error adding vote:', err)
-    error.value = 'Failed to add vote. Please try again.'
+    error.value = '投票の送信に失敗しました。'
   }
 }
 
@@ -93,7 +108,7 @@ const handleUnvote = async (optionIndex: number) => {
     }
   } catch (err) {
     console.error('Error removing vote:', err)
-    error.value = 'Failed to remove vote. Please try again.'
+    error.value = '投票の取消に失敗しました。'
   }
 }
 
@@ -119,7 +134,7 @@ const savePollChanges = async () => {
 
   // Validate title
   if (!editTitle.value.trim()) {
-    error.value = 'Title is required'
+    error.value = 'タイトルは必須です'
     return
   }
 
@@ -136,7 +151,7 @@ const savePollChanges = async () => {
     isEditMode.value = false
   } catch (err) {
     console.error('Error updating poll:', err)
-    error.value = 'Failed to update poll. Please try again.'
+    error.value = '投票の更新に失敗しました。'
   } finally {
     isSaving.value = false
   }
@@ -169,6 +184,8 @@ ${poll.value?.description}
 ${repeatedMeasure}
 
 ${optionResult}
+
+⚠️ この投票はメモリ上にのみ保存されています (サーバー再起動で消去)
 :::`
 
   navigator.clipboard.writeText(resultMarkdown).then(() => {
@@ -196,139 +213,142 @@ onMounted(() => {
   <div class="poll-detail">
     <!-- Loading state -->
     <div v-if="loading" class="text-center py-8">
-      <div
-        class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400 mx-auto"
-      ></div>
-      <p class="mt-4 text-gray-500">Loading poll...</p>
+      <span class="loading loading-spinner loading-lg text-primary"></span>
+      <p class="mt-4 text-base-content/60">読み込み中…</p>
     </div>
 
     <!-- Error state -->
-    <div
-      v-else-if="error"
-      class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-    >
-      <strong class="font-bold">Error!</strong>
-      <span class="block sm:inline"> {{ error }}</span>
-      <button
-        @click="loadPoll"
-        class="mt-2 bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded flex items-center gap-1 mx-auto"
-      >
-        <ArrowPathIcon class="h-4 w-4" />
-        <span>Try Again</span>
+    <div v-else-if="error && !poll" class="alert alert-error text-sm">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn-sm" @click="loadPoll">
+        <IconRefresh class="h-4 w-4" />
+        再試行
       </button>
     </div>
 
     <!-- Poll not found -->
     <div v-else-if="!poll" class="text-center py-8">
-      <p class="text-xl text-gray-600">Poll not found</p>
+      <p class="text-lg text-base-content/60">投票が見つかりません</p>
+      <p class="mt-1 text-sm text-base-content/50">
+        投票データはメモリ上にのみ保存されているため、サーバー再起動時に削除されています
+      </p>
     </div>
 
     <!-- Poll content -->
-    <div v-else class="bg-white rounded-lg shadow-md p-6">
-      <!-- View mode -->
-      <div v-if="!isEditMode">
-        <div class="flex justify-between items-start mb-2">
-          <h1 class="text-2xl font-bold break-all">{{ poll.title }}</h1>
-          <button
-            @click="enterEditMode"
-            class="px-3 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 flex items-center gap-1"
-          >
-            <PencilIcon class="h-4 w-4" />
-            <span>編集</span>
-          </button>
-        </div>
-        <p v-if="poll.description" class="text-gray-600 mb-6 break-all">{{ poll.description }}</p>
-      </div>
-
-      <!-- Edit mode -->
-      <div v-else class="mb-6">
-        <!-- Error message -->
-        <div
-          v-if="error"
-          class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-        >
-          {{ error }}
+    <div v-else class="card bg-base-100 border border-base-300">
+      <div class="card-body">
+        <!-- View mode -->
+        <div v-if="!isEditMode">
+          <div class="flex justify-between items-start gap-3">
+            <h1 class="text-2xl font-bold break-all min-w-0">{{ poll.title }}</h1>
+            <button type="button" class="btn btn-ghost btn-sm shrink-0" @click="enterEditMode">
+              <IconPencil class="h-4 w-4" />
+              編集
+            </button>
+          </div>
+          <p v-if="poll.description" class="text-sm text-base-content/70 mt-1 break-all">
+            {{ poll.description }}
+          </p>
         </div>
 
-        <!-- Title -->
-        <div class="mb-4">
-          <label for="edit-title" class="block text-gray-700 font-bold mb-2">タイトル</label>
-          <input
-            id="edit-title"
-            v-model="editTitle"
-            type="text"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="投票のタイトルを入力"
-            required
-          />
+        <!-- Edit mode -->
+        <div v-else>
+          <!-- Error message -->
+          <div v-if="error" class="alert alert-error py-2 text-sm mb-4">
+            <span>{{ error }}</span>
+          </div>
+
+          <!-- Title -->
+          <fieldset class="mb-4">
+            <legend class="text-sm font-bold text-base-content/80 mb-2">タイトル</legend>
+            <input
+              v-model="editTitle"
+              type="text"
+              class="input w-full"
+              placeholder="投票のタイトルを入力"
+              required
+            />
+          </fieldset>
+
+          <!-- Description -->
+          <fieldset class="mb-4">
+            <legend class="text-sm font-bold text-base-content/80 mb-2">説明 (任意)</legend>
+            <textarea
+              v-model="editDescription"
+              class="textarea w-full"
+              placeholder="投票の説明を入力"
+              rows="3"
+            ></textarea>
+          </fieldset>
+
+          <!-- Buttons -->
+          <div class="flex gap-2">
+            <button
+              type="button"
+              class="btn btn-primary"
+              :disabled="isSaving"
+              @click="savePollChanges"
+            >
+              <span v-if="isSaving" class="loading loading-spinner"></span>
+              <span>{{ isSaving ? '保存中…' : '保存' }}</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-ghost"
+              :disabled="isSaving"
+              @click="cancelEditMode"
+            >
+              キャンセル
+            </button>
+          </div>
         </div>
 
-        <!-- Description -->
-        <div class="mb-4">
-          <label for="edit-description" class="block text-gray-700 font-bold mb-2"
-            >説明 (任意)</label
-          >
-          <textarea
-            id="edit-description"
-            v-model="editDescription"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="投票の説明を入力"
-            rows="3"
-          ></textarea>
+        <!-- 参加状況 -->
+        <div class="mt-2 mb-4 text-sm text-base-content/60">
+          <div class="flex flex-wrap items-baseline gap-x-3">
+            <span>
+              総投票数: {{ totalVotes }} 票<span v-if="executiveTotal > 0">
+                ・ 参加者 {{ participants }}/{{ executiveTotal }} 名 ({{ participationPct }}%)</span
+              >
+            </span>
+          </div>
+          <progress
+            v-if="executiveTotal > 0"
+            class="progress progress-primary h-2 mt-2"
+            :value="participants"
+            :max="executiveTotal"
+          ></progress>
         </div>
 
-        <!-- Buttons -->
-        <div class="flex space-x-2">
-          <button
-            @click="savePollChanges"
-            class="px-4 py-2 bg-blue-400 text-white rounded-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300 flex items-center gap-1"
-            :disabled="isSaving"
-          >
-            <span v-if="isSaving">保存中...</span>
-            <span v-else>保存</span>
-          </button>
-          <button
-            @click="cancelEditMode"
-            class="px-4 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 flex items-center gap-1"
-            :disabled="isSaving"
-          >
-            キャンセル
-          </button>
-        </div>
-      </div>
-
-      <div class="mb-4 text-sm text-gray-500">
-        総投票数: {{ totalVotes }} ({{ ((totalVotes / 58) * 100).toFixed(0) }}%)
-      </div>
-
-      <!-- Poll options -->
-      <div class="flex flex-col gap-2">
-        <div v-for="(option, index) in poll.options" :key="option.id">
+        <!-- Poll options -->
+        <div class="flex flex-col gap-2">
           <PollOption
+            v-for="(option, index) in poll.options"
+            :key="option.id"
             :option="option"
             :option-index="index"
             :poll-id="poll.id"
+            :total-eligible="executiveTotal"
             @vote="handleVote"
             @unvote="handleUnvote"
           />
         </div>
-      </div>
 
-      <div class="mt-4 flex gap-2">
-        <button
-          @click="copyEmbedCode"
-          class="px-4 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 inline-flex items-center gap-1"
-        >
-          <ClipboardDocumentIcon class="h-4 w-4" />
-          <span>埋め込みコードをコピー</span>
-        </button>
-        <button
-          @click="copyResult"
-          class="px-4 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 inline-flex items-center gap-1"
-        >
-          <ClipboardDocumentIcon class="h-4 w-4" />
-          <span>結果をコピー</span>
-        </button>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button type="button" class="btn btn-outline" @click="copyEmbedCode">
+            <IconCopy class="h-4 w-4" />
+            埋め込みコードをコピー
+          </button>
+          <button type="button" class="btn btn-outline" @click="copyResult">
+            <IconCopy class="h-4 w-4" />
+            結果をコピー
+          </button>
+        </div>
+
+        <p class="mt-4 text-xs text-base-content/50">
+          ※
+          投票データはサーバーのメモリ上にのみ保存されています。サーバーの再起動・再デプロイ時にすべて消去されます。
+        </p>
       </div>
     </div>
   </div>

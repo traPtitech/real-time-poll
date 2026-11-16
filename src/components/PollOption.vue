@@ -2,13 +2,16 @@
 import { computed } from 'vue'
 import type { PollOption } from '../../server/src/domain'
 import { userService } from '../services/user'
-import { HandThumbUpIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { iconUrl } from '../services/mock'
+import { IconThumbUp, IconX } from '@tabler/icons-vue'
 
 const props = defineProps<{
   option: PollOption
   optionIndex: number
   pollId: string
   disabled?: boolean
+  // 全役員数 (0 の場合はパーセントを表示しない)
+  totalEligible?: number
 }>()
 
 const emit = defineEmits<{
@@ -19,6 +22,13 @@ const emit = defineEmits<{
 // Check if the current user has voted for this option
 const hasVoted = computed(() => {
   return props.option.votes.includes(userService.userId.value)
+})
+
+// この選択肢への票の割合 (全役員数が不明な場合は null)
+const percentage = computed(() => {
+  const total = props.totalEligible ?? 0
+  if (total <= 0) return null
+  return Math.min(100, Math.round((props.option.votes.length / total) * 100))
 })
 
 // Handle vote button click
@@ -34,44 +44,52 @@ const handleVoteClick = () => {
 </script>
 
 <template>
-  <div class="poll-option border border-gray-300 rounded-lg p-4 relative overflow-hidden">
-    <!-- Option content -->
-    <div class="relative z-10 flex justify-between items-center">
-      <div>
-        <div
-          class="text-lg font-bold"
-          :class="{
-            'text-blue-500': option.text === '賛成',
-            'text-red-500': option.text === '反対',
-          }"
-        >
-          {{ option.text }}
+  <div class="card bg-base-100 border-2" :class="hasVoted ? 'border-primary' : 'border-base-300'">
+    <div class="card-body p-4">
+      <div class="flex justify-between items-center gap-3">
+        <div class="min-w-0">
+          <h3
+            class="text-lg font-bold break-words"
+            :class="{
+              'text-primary': option.text === '賛成',
+              'text-error': option.text === '反対',
+            }"
+          >
+            {{ option.text }}
+            <span v-if="hasVoted" class="badge badge-primary badge-sm align-middle ml-1"
+              >投票済み</span
+            >
+          </h3>
+          <p class="text-sm text-base-content/60">
+            投票数 {{ option.votes.length
+            }}<span v-if="percentage !== null"> ({{ percentage }}%)</span>
+          </p>
         </div>
-        <div class="text-sm text-gray-500">投票数 {{ option.votes.length }}</div>
+
+        <button
+          type="button"
+          class="btn shrink-0"
+          :class="hasVoted ? 'btn-error' : 'btn-primary'"
+          :disabled="disabled"
+          @click="handleVoteClick"
+        >
+          <IconX v-if="hasVoted" class="h-5 w-5" />
+          <IconThumbUp v-else class="h-5 w-5" />
+          <span>{{ hasVoted ? 'キャンセル' : '投票' }}</span>
+        </button>
       </div>
 
-      <button
-        @click="handleVoteClick"
-        :disabled="disabled"
-        :class="[
-          'px-4 py-2 rounded-md transition-colors flex items-center gap-1 font-bold',
-          hasVoted
-            ? 'bg-red-400 hover:bg-red-500 text-white'
-            : 'bg-blue-400 hover:bg-blue-500 text-white',
-          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
-        ]"
-      >
-        <XMarkIcon v-if="hasVoted" class="h-4 w-4" />
-        <HandThumbUpIcon v-else class="h-4 w-4" />
-        <span>{{ hasVoted ? 'キャンセル' : '投票' }}</span>
-      </button>
-    </div>
-    <div class="mt-2 flex flex-wrap gap-1 h-6">
-      <div v-for="userId in option.votes" :key="userId" class="flex items-center" :title="userId">
+      <!-- Voters (折り返して全員表示・見切れ防止) -->
+      <div v-if="option.votes.length > 0" class="flex flex-wrap gap-1">
         <img
-          :src="`https://q.trap.jp/api/v3/public/icon/${userId}`"
+          v-for="userId in option.votes"
+          :key="userId"
+          :src="iconUrl(userId)"
           :alt="userId"
-          class="w-6 h-6 rounded-full border border-gray-200"
+          :title="userId"
+          loading="lazy"
+          class="w-6 h-6 rounded-full border border-base-300"
+          :class="userId === userService.userId.value ? 'ring-2 ring-primary' : ''"
         />
       </div>
     </div>

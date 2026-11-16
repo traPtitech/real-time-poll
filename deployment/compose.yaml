@@ -25,6 +25,12 @@ services:
       - real-time-poll-network
     extra_hosts:
       - 'host.docker.internal:host-gateway'
+    environment:
+      # traQ API トークン (役員会メンバーの判定に使用・必須)
+      # deployment/.env に TRAQ_API_TOKEN=... を作成するか、環境変数で渡してください
+      - TRAQ_API_TOKEN=${TRAQ_API_TOKEN:?deployment/.env に TRAQ_API_TOKEN を設定してください}
+      # 役員会メンバーの traQ ユーザーグループ名
+      - EXECUTIVE_GROUP_NAME=${EXECUTIVE_GROUP_NAME:-executive26}
 
 networks:
   real-time-poll-network:
